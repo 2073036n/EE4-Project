@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <unistd.h>
+#include <time.h>
 
 
 const int MAX_FEATURE=48; //Maximum size of a single feature (for memory buffer reasons)
@@ -19,8 +20,8 @@ int compareFeatures(int *features,int distances[],int *fdcount,
 	int *previousFeatures,int previousDistances[],int *previousfdcount){
 	int j;
 	for(j=0;j<(*previousfdcount);j++){
-		if(features[*fdcount-1]>((previousFeatures[j]-10)) && 
-			(features[*fdcount-1]<((previousFeatures[j]+10)))) {
+		if(features[*fdcount-1]>((previousFeatures[j]-15)) && 
+			(features[*fdcount-1]<((previousFeatures[j]+15)))) {
 			if(distances[*fdcount-1]-previousDistances[j]>0){
 				// printf("matched with %i\n",previousFeatures[j] );
 				previousFeatures[j]=-10;
@@ -39,7 +40,7 @@ int compareFeatures(int *features,int distances[],int *fdcount,
 void endFeature(int *currentFeature,int *fcount,int *features,int distances[],int *fdcount,
 	int count,int *previousFeatures,int previousDistances[],int *previousfdcount){
 	features[*fdcount]=*currentFeature;
-	distances[*fdcount]=(count+1)-(MAX_FEATURE-*fcount);
+	distances[*fdcount]=(count+1)-(*fcount);
 	// printf("feature: %i\n",*currentFeature);
 	*currentFeature=0;
 	*fdcount+=1;
@@ -82,11 +83,13 @@ int main(int argc, char *argv[]){
 	int bcount = 0;
 	int aOrB = 0; //0 represents image A and 1 image B
 	int currentFeature = 0;
+	int smooth =0;
 	int fcount = MAX_FEATURE-1;
 	while(fgets(buffer,33,inFile)!=NULL){
 		if((count++)==768){
 			printf("\n-------------------\n\n");
 			count=0;
+			smooth=0;
 			fcount=MAX_FEATURE-1;
 			if(aOrB==0){
 				aOrB=1;
@@ -98,34 +101,36 @@ int main(int argc, char *argv[]){
 			}
 		}
 		int i = atoi(buffer);
-		if(i>14000000){
-			i=5;
+		smooth=smooth-(0.025 *(smooth-i));
+		// printf("%i\n",smooth);
+		if(smooth>300000){
+			smooth=5;
 		}
-		else if(i>13000000){
-			i=4;
+		else if(smooth>200000){
+			smooth=4;
 		}
-		else if(i>12000000){
-			i=3;
+		else if(smooth>100000){
+			smooth=3;
 		}
-		else if(i>10000000){
-			i=1;
+		else if(smooth>90000){
+			smooth=1;
 		}
 		else{
-			i=0;
+			smooth=0;
 		}
-		if(i>0){
+		if(smooth>3){
 			if(currentFeature==0){
-				currentFeature = i;
+				currentFeature = smooth;
 				gap=BLANK_GAP_SIZE_IN_FEATURE;
 				fcount--;
 			}
 			else{
 				if(aOrB==0){
-					addToFeature(i,&currentFeature,&fcount,featuresA,distancesA,&acount,count,featuresB,distancesB,&bcount);
+					addToFeature(smooth,&currentFeature,&fcount,featuresA,distancesA,&acount,count,featuresB,distancesB,&bcount);
 					gap=BLANK_GAP_SIZE_IN_FEATURE;
 				}
 				else{
-					addToFeature(i,&currentFeature,&fcount,featuresB,distancesB,&bcount,count,featuresA,distancesA,&acount);
+					addToFeature(smooth,&currentFeature,&fcount,featuresB,distancesB,&bcount,count,featuresA,distancesA,&acount);
 					gap=BLANK_GAP_SIZE_IN_FEATURE;
 				}
 			}
