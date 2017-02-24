@@ -19,7 +19,7 @@ public class imageParse{
 
 	public static void main(String args[]) throws IOException{
 
-		File dir = new File("/home/timothy/workspace/TDP4/testDir2");
+		File dir = new File("/home/timothy/workspace/TDP4/testDir4");
   		File[] directoryListing = dir.listFiles();
 		if (directoryListing != null) {
 

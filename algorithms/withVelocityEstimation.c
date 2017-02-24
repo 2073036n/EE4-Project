@@ -7,9 +7,9 @@
 #include <time.h>
 
 
-const int MAX_FEATURE=16; //Maximum size of a single feature (for memory buffer reasons)
-const int MAX_FEATURE_PER_IMAGE = 8; //Maximum number of features that can be stored per image
-const int BLANK_GAP_SIZE_IN_FEATURE = 0; //Maximum number of blank spaces that can apear between light spots in a single feature.
+const int MAX_FEATURE=48; //Maximum size of a single feature (for memory buffer reasons)
+const int MAX_FEATURE_PER_IMAGE = 16; //Maximum number of features that can be stored per image
+const int BLANK_GAP_SIZE_IN_FEATURE = 8; //Maximum number of blank spaces that can apear between light spots in a single feature.
 
 
 /*
@@ -22,14 +22,16 @@ int compareFeatures(int *features,int distances[],int *fdcount,
 	for(j=0;j<(*previousfdcount);j++){
 		if(features[*fdcount-1]>((previousFeatures[j]-10)) && 
 			(features[*fdcount-1]<((previousFeatures[j]+10)))) {
-			// printf("matched with %i\n",previousFeatures[j] );
-			previousFeatures[j]=-10;
-			return distances[*fdcount-1]-previousDistances[j];
+			if(distances[*fdcount-1]-previousDistances[j]>0){
+				// printf("matched with %i\n",previousFeatures[j] );
+				previousFeatures[j]=-10;
+				return distances[*fdcount-1]-previousDistances[j];
+			}
 		}
 		// if( (features[*fdcount-1]>((previousFeatures[j]-3))) && (features[*fdcount-1]<((previousFeatures[j]+3))) ){
 		// 	previousFeatures[j]=-3;
 	}
-	return NULL;
+	return 0;
 }
 
 /*
@@ -37,17 +39,15 @@ int compareFeatures(int *features,int distances[],int *fdcount,
 */
 void endFeature(int *currentFeature,int *fcount,int *features,int distances[],int *fdcount,
 	int count,int *previousFeatures,int previousDistances[],int *previousfdcount){
-	if(*fdcount<MAX_FEATURE_PER_IMAGE){
-		features[*fdcount]=*currentFeature;
-		distances[*fdcount]=(count+1)-(*fcount);
-		printf("feature: %i\n",*currentFeature);
-		*currentFeature=0;
-		*fdcount+=1;
-		*fcount=MAX_FEATURE-1;
-		int result =compareFeatures(features,distances,fdcount,previousFeatures,previousDistances,previousfdcount);
-		if(result!=NULL)
-			printf("%i\n",result);
-	}
+	features[*fdcount]=*currentFeature;
+	distances[*fdcount]=(count+1)-(*fcount);
+	// printf("feature: %i\n",*currentFeature);
+	*currentFeature=0;
+	*fdcount+=1;
+	*fcount=MAX_FEATURE-1;
+	int result =compareFeatures(features,distances,fdcount,previousFeatures,previousDistances,previousfdcount);
+	if(result>0) 
+		printf("%i\n",result);
 }
 
 /*
@@ -66,7 +66,7 @@ void addToFeature(int i,int *currentFeature,int *fcount,int *features,int distan
 
 int main(int argc, char *argv[]){
 	//Read in file with bit stream in it
-	char *path = "/home/timothy/workspace/TDP4/vid_3.txt";
+	char *path = "/home/timothy/workspace/TDP4/image_arrays.txt";
 	FILE *inFile = fopen(path,"r");
 	if(inFile==NULL){
 		printf("error opening file\n");
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]){
 	int smooth =0;
 	int fcount = MAX_FEATURE-1;
 	while(fgets(buffer,33,inFile)!=NULL){
-		if((count++)==128){
+		if((count++)==768){
 			printf("\n-------------------\n\n");
 			count=0;
 			smooth=0;
@@ -100,26 +100,23 @@ int main(int argc, char *argv[]){
 				acount=0;
 			}
 		}
-		int i = atoi(buffer);
-		smooth=i;
-		// smooth=smooth-(0.025 *(smooth-i));
-		// smooth= (sqrt(pow(smooth-i,2))-smooth)/10000;
-		if(smooth>13000000){
-			smooth=4;
+		int smooth = atoi(buffer);
+		if(smooth>12000000){
+			smooth=8;
 		}
 		else if(smooth>11000000){
-			smooth=3;
+			smooth=6;
 		}
 		else if(smooth>10000000){
-			smooth=2;
+			smooth=4;
 		}
 		else if(smooth>9000000){
-			smooth=1;
+			smooth=2;
 		}
 		else{
 			smooth=0;
 		}
-		if(smooth>0){
+		if(smooth>1){
 			if(currentFeature==0){
 				currentFeature = smooth;
 				gap=BLANK_GAP_SIZE_IN_FEATURE;

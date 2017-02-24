@@ -56,7 +56,7 @@ void addToFeature(int i,int *currentFeature,int *fcount,int *features,int distan
 }
 
 int main(int argc, char *argv[]){
-	char *path = "/home/timothy/workspace/TDP4/image_arrays.txt";
+	char *path = "/home/timothy/workspace/TDP4/test_4.txt";
 	FILE *inFile = fopen(path,"r");
 	if(inFile==NULL){
 		printf("error opening file\n");
